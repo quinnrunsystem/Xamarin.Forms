@@ -21,8 +21,6 @@ namespace Xamarin.Forms.Platform.UWP
 		bool _cursorPositionChangePending = false;
 		bool _selectionLengthChangePending = false;
 		bool _selectionIsUpdating;
-		int? _defaultCursorPosition;
-		int? _defaultSelectionLength;
 
 		IElementController ElementController => Element as IElementController;
 
@@ -40,6 +38,7 @@ namespace Xamarin.Forms.Platform.UWP
 					textBox.TextChanged += OnNativeTextChanged;
 					textBox.KeyUp += TextBoxOnKeyUp;
 					textBox.SelectionChanged += SelectionChanged;
+					textBox.GotFocus += TextBoxGotFocus;
 					// If the Forms VisualStateManager is in play or the user wants to disable the Forms legacy
 					// color stuff, then the underlying textbox should just use the Forms VSM states
 					textBox.UseFormsVsm = e.NewElement.HasVisualStateGroups()
@@ -67,6 +66,12 @@ namespace Xamarin.Forms.Platform.UWP
 			}
 		}
 
+		void TextBoxGotFocus(object sender, RoutedEventArgs e)
+		{
+			UpdateCursorPosition();
+			UpdateSelectionLength();
+		}
+
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing && Control != null)
@@ -74,6 +79,7 @@ namespace Xamarin.Forms.Platform.UWP
 				Control.TextChanged -= OnNativeTextChanged;
 				Control.KeyUp -= TextBoxOnKeyUp;
 				Control.SelectionChanged -= SelectionChanged;
+				Control.GotFocus -= TextBoxGotFocus;
 			}
 
 			base.Dispose(disposing);
@@ -330,24 +336,23 @@ namespace Xamarin.Forms.Platform.UWP
 			if (_selectionIsUpdating || !_selectionLengthChangePending || control == null || Element == null)
 				return;
 
-			if (!_defaultSelectionLength.HasValue)
-				_defaultSelectionLength = control.SelectionLength;
-
-			int selectionLength;
-			if (Element.IsSet(Entry.SelectionLengthProperty))
-				selectionLength = System.Math.Min(control.Text.Length - Element.CursorPosition, Element.SelectionLength);
-			else
-				selectionLength = (int)_defaultSelectionLength;
-
-			if (selectionLength != control.SelectionLength)
+			if (control.Focus(FocusState.Programmatic))
 			{
-				_selectionIsUpdating = true;
-				control.SelectionLength = selectionLength;
-				control.Focus(FocusState.Programmatic);
-				_selectionIsUpdating = false;
-			}
+				int selectionLength;
+				if (Element.IsSet(Entry.SelectionLengthProperty))
+					selectionLength = System.Math.Min(control.Text.Length - Element.CursorPosition, Element.SelectionLength);
+				else
+					selectionLength = 0;
 
-			_selectionLengthChangePending = false;
+				if (selectionLength != control.SelectionLength)
+				{
+					_selectionIsUpdating = true;
+					control.SelectionLength = selectionLength;
+					_selectionIsUpdating = false;
+				}
+
+				_selectionLengthChangePending = false;
+			}
 		}
 
 		void UpdateCursorPosition()
@@ -356,28 +361,27 @@ namespace Xamarin.Forms.Platform.UWP
 			if (_selectionIsUpdating || !_cursorPositionChangePending || control == null || Element == null )
 				return;
 
-			if (!_defaultCursorPosition.HasValue)
-				_defaultCursorPosition = control.SelectionStart;
-
-			int start;
-			if (Element.IsSet(Entry.CursorPositionProperty))
-				start = Element.CursorPosition;
-			else
-				start = (int)_defaultCursorPosition;
-
-			if (start != control.SelectionStart)
+			if (control.Focus(FocusState.Programmatic))
 			{
-				_selectionIsUpdating = true;
-				control.SelectionStart = start;
-				control.Focus(FocusState.Programmatic);
-				_selectionIsUpdating = false;
+				int start;
+				if (Element.IsSet(Entry.CursorPositionProperty))
+					start = Element.CursorPosition;
+				else
+					start = control.Text.Length;
 
-				// Length is dependent on start, so we'll need to update it
-				_selectionLengthChangePending = true;
-				UpdateSelectionLength();
+				if (start != control.SelectionStart)
+				{
+					_selectionIsUpdating = true;
+					control.SelectionStart = start;
+					_selectionIsUpdating = false;
+
+					// Length is dependent on start, so we'll need to update it
+					_selectionLengthChangePending = true;
+					UpdateSelectionLength();
+				}
+
+				_cursorPositionChangePending = false;
 			}
-
-			_cursorPositionChangePending = false;
 		}
 	}
 }
