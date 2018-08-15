@@ -6,7 +6,7 @@ using AColor = Android.Graphics.Color;
 
 namespace Xamarin.Forms.Platform.Android
 {
-	internal class ButtonDrawable : Drawable
+	internal class BorderDrawable : Drawable
 	{
 		public const int DefaultCornerRadius = 2; // Default value for Android material button.
 
@@ -36,14 +36,18 @@ namespace Xamarin.Forms.Platform.Android
 			set { _paddingTop = value; }
 		}
 
-		public ButtonDrawable(Func<double, float> convertToPixels, Color defaultColor)
+		public BorderDrawable(Func<double, float> convertToPixels, Color defaultColor)
 		{
 			_convertToPixels = convertToPixels;
 			_pressed = false;
 			_defaultColor = defaultColor;
 		}
 
-		public Button Button { get; set; }
+		public IBorderController Button
+		{
+			get;
+			set;
+		}
 
 		public override bool IsStateful
 		{
@@ -57,6 +61,7 @@ namespace Xamarin.Forms.Platform.Android
 
 		public override void Draw(Canvas canvas)
 		{
+			//Bounds = new Rect(Bounds.Left, Bounds.Top, Bounds.Right + (int)_convertToPixels(10), Bounds.Bottom + (int)_convertToPixels(10));
 			int width = Bounds.Width();
 			int height = Bounds.Height();
 
@@ -85,7 +90,7 @@ namespace Xamarin.Forms.Platform.Android
 			canvas.DrawBitmap(bitmap, 0, 0, new Paint());
 		}
 
-		public ButtonDrawable SetShadow(float dy, float dx, AColor color, float radius)
+		public BorderDrawable SetShadow(float dy, float dx, AColor color, float radius)
 		{
 			_shadowDx = dx;
 			_shadowDy = dy;
@@ -94,7 +99,7 @@ namespace Xamarin.Forms.Platform.Android
 			return this;
 		}
 
-		public ButtonDrawable SetPadding(float top, float left)
+		public BorderDrawable SetPadding(float top, float left)
 		{
 			_paddingTop = top;
 			_paddingLeft = left;
@@ -188,7 +193,7 @@ namespace Xamarin.Forms.Platform.Android
 			paint.Color = pressed ? PressedBackgroundColor.ToAndroid() : BackgroundColor.ToAndroid();
 			paint.SetStyle(Paint.Style.Fill);
 			paint.SetShadowLayer(_shadowRadius, _shadowDx, _shadowDy, _shadowColor);
-
+			
 			canvas.DrawPath(path, paint);
 		}
 

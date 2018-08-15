@@ -804,6 +804,11 @@ namespace Xamarin.Forms
 				focus(this, new FocusEventArgs(this, true));
 		}
 
+		internal void ChangeVisualStateInternal()
+		{
+			ChangeVisualState();
+		}
+
 		protected internal virtual void ChangeVisualState()
 		{
 			if (!IsEnabled)

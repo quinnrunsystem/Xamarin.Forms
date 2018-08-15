@@ -12,6 +12,7 @@ namespace Xamarin.Forms.Platform.Android
 	internal interface IImageRendererController
 	{
 		void SkipInvalidate();
+		bool IsDisposed { get; }
 	}
 
 	public class ImageRenderer : ViewRenderer<Image, AImageView>

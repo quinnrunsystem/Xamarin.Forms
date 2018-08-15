@@ -4,20 +4,19 @@ using Android.Content;
 using Android.Graphics;
 using Android.Support.V7.Widget;
 using Android.Util;
-using Xamarin.Forms.Internals;
-using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
-using GlobalResource = Android.Resource;
 using Object = Java.Lang.Object;
 using AView = Android.Views.View;
 using AMotionEvent = Android.Views.MotionEvent;
 using AMotionEventActions = Android.Views.MotionEventActions;
 using static System.String;
+using AColor = Android.Graphics.Color;
+using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
 
 namespace Xamarin.Forms.Platform.Android.AppCompat
 {
-	public class ButtonRenderer : ViewRenderer<Button, AppCompatButton>, AView.IOnAttachStateChangeListener
+	public class ButtonRenderer : ViewRenderer<Button, AppCompatButton>, AView.IOnAttachStateChangeListener, IBorderVisualElementRenderer
 	{
-		ButtonBackgroundTracker _backgroundTracker;
+		BorderBackgroundManager _backgroundTracker;
 		TextColorSwitcher _textColorSwitcher;
 		float _defaultFontSize;
 		Thickness? _defaultPadding;
@@ -105,10 +104,6 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 		{
 			base.OnElementChanged(e);
 
-			if (e.OldElement != null)
-			{
-			}
-
 			if (e.NewElement != null)
 			{
 				if (Control == null)
@@ -124,12 +119,12 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 
 					SetNativeControl(button);
 					button.AddOnAttachStateChangeListener(this);
-				}
+					_backgroundTracker = new BorderBackgroundManager(this);
 
-				if (_backgroundTracker == null)
-					_backgroundTracker = new ButtonBackgroundTracker(Element, Control);
-				else
-					_backgroundTracker.Button = e.NewElement;
+					_backgroundTracker.Reset();
+					_backgroundTracker.UpdateDrawable();
+				}
+				 
 
 				_defaultFontSize = 0f;
 				_defaultPadding = null;
@@ -314,6 +309,14 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 			_paddingDeltaPix = delta ?? new Thickness();
 			UpdatePadding();
 		}
+
+		float IBorderVisualElementRenderer.ShadowRadius => Control.ShadowRadius;
+		float IBorderVisualElementRenderer.ShadowDx => Control.ShadowDx;
+		float IBorderVisualElementRenderer.ShadowDy => Control.ShadowDy;
+		AColor IBorderVisualElementRenderer.ShadowColor => Control.ShadowColor;
+		bool IBorderVisualElementRenderer.UseDefaultPadding() => Element.OnThisPlatform().UseDefaultPadding();
+		bool IBorderVisualElementRenderer.UseDefaultShadow() => Element.OnThisPlatform().UseDefaultShadow();
+		bool IBorderVisualElementRenderer.IsShadowEnabled() => true;
 
 		class ButtonClickListener : Object, AView.IOnClickListener
 		{
